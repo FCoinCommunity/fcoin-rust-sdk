@@ -17,8 +17,8 @@ bigdecimal = "0.0.12"
 num = "0.1"
 hyper = "0.11"
 time = "0.1"
-hmac-sha1 = "^0.1"
-hex-slice = "^0.1"
+sha-1 = "0.7.0"
+hmac = "0.5"
 
 [lib]
 name = "fcoin"
