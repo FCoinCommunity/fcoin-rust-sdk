@@ -6,7 +6,7 @@ use std::str::FromStr;
 use bigdecimal::BigDecimal;
 
 pub fn main() {
-    let api = Fcoin::sandbox("c62eef2b6d5748d6b592b3ec5eda00f9", "890bf56c2c3646b1a752e94a3be2d042");
+    let api = Fcoin::sandbox("your_api_key", "your_api_secret");
     let rsp: ApiResponse<Vec<String>> = api.coins().unwrap();
     if rsp.status == 0 {
         if let Some(v) = rsp.data {
@@ -19,8 +19,8 @@ pub fn main() {
         }
     }
     let condition: order::OrderQuery = order::OrderQuery {
-        symbol: None,
-        states: None,
+        symbol: "btcusdt".to_string(),
+        states: "filled".to_string(),
         before: None,
         after: None,
         limit: None,
@@ -28,7 +28,7 @@ pub fn main() {
     let rsp: ApiResponse<Vec<order::OrderInfo>> = api.query(&condition).unwrap();
     if rsp.status == 0 {
         if let Some(v) = rsp.data {
-            println!("{}", v.len());
+            println!("{:?}", v);
         }
     } else {
         println!("error: status={} ", rsp.status);
@@ -36,12 +36,30 @@ pub fn main() {
             println!("{}", m);
         }
     }
-    let order = order::OrderRequest::sell_limit("btcusdt", BigDecimal::from_str("1.0").unwrap(), BigDecimal::from_str("1000.99").unwrap());
+    let order = order::OrderRequest::buy_limit("btcusdt", BigDecimal::from_str("1.80").unwrap(), BigDecimal::from_str("7448.92").unwrap());
     let rsp = api.ordering(&order).unwrap();
     if rsp.status == 0 {
         if let Some(v) = rsp.data {
             println!("order submitted, id: {:?}", v);
             api.cancel(&v).unwrap();
+            let info = api.get(&v).unwrap();
+            if let Some(i) = info.data {
+                println!("{:?}", i);
+            } else {
+                println!("error to get order, status={}", info.status);
+                if let Some(m) = info.msg {
+                    println!("{}", m);
+                }
+            }
+            let match_result = api.get_match_result(&v).unwrap();
+            if let Some(mr) = match_result.data {
+                println!("{:?}", mr);
+            } else {
+                println!("error to get match result, status={}", match_result.status);
+                if let Some(m) = match_result.msg {
+                    println!("{}", m);
+                }
+            }
         }
     } else {
         println!("error: status={} ", rsp.status);

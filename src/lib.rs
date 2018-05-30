@@ -36,9 +36,9 @@ pub trait Function {
 
     fn query(&self, condition: &OrderQuery) -> Result<ApiResponse<Vec<OrderInfo>>>;
 
-    fn get(&self, id: String) -> Result<ApiResponse<OrderInfo>>;
+    fn get(&self, id: &str) -> Result<ApiResponse<OrderInfo>>;
 
-    fn get_match_result(&self, id: String) -> Result<ApiResponse<MatchResult>>;
+    fn get_match_result(&self, id: &str) -> Result<ApiResponse<Vec<MatchResult>>>;
 }
 
 pub struct Fcoin {
@@ -172,19 +172,11 @@ impl Function for Fcoin {
             query_str += &limit.to_string();
             query_str += "&"
         }
-        if let Some(ref states) = condition.states {
-            query_str += "states=";
-            query_str += &states;
-            query_str += "&";
-        }
-        if let Some(ref symbol) = condition.symbol {
-            query_str += "symbol=";
-            query_str += &symbol;
-            query_str += "&";
-        }
-        if query_str.ends_with("?") || query_str.ends_with("&") {
-            query_str.pop();
-        }
+        query_str += "states=";
+        query_str += &condition.states;
+        query_str += "&";
+        query_str += "symbol=";
+        query_str += &condition.symbol;
         url += &query_str;
         sig_prefix += &query_str;
 
@@ -192,7 +184,7 @@ impl Function for Fcoin {
         let mut values = vec![];
         let current_time = time::get_time();
         let timestamp: u64 = (current_time.sec as u64 * 1000) + (current_time.nsec as u64 / 1000 / 1000);
-        let sig = signature::sign("POST", &sig_prefix, timestamp, &mut keys, &mut values, &self.secret);
+        let sig = signature::sign("GET", &sig_prefix, timestamp, &mut keys, &mut values, &self.secret);
         let mut headers = Headers::new();
         headers.set(FcAccessKey(self.key.clone()));
         headers.set(FcAccessSignature(sig));
@@ -201,17 +193,17 @@ impl Function for Fcoin {
         Ok(result)
     }
 
-    fn get(&self, id: String) -> Result<ApiResponse<OrderInfo>> {
+    fn get(&self, id: &str) -> Result<ApiResponse<OrderInfo>> {
         let mut url = self.uri.to_string();
         url += "/orders/";
-        url += &id;
+        url += id;
         let mut sig_prefix = "https://api.fcoin.com/v2/orders/".to_string();
-        sig_prefix += &id;
+        sig_prefix += id;
         let mut keys = vec![];
         let mut values = vec![];
         let current_time = time::get_time();
         let timestamp: u64 = (current_time.sec as u64 * 1000) + (current_time.nsec as u64 / 1000 / 1000);
-        let sig = signature::sign("POST", &sig_prefix, timestamp, &mut keys, &mut values, &self.secret);
+        let sig = signature::sign("GET", &sig_prefix, timestamp, &mut keys, &mut values, &self.secret);
         let mut headers = Headers::new();
         headers.set(FcAccessKey(self.key.clone()));
         headers.set(FcAccessSignature(sig));
@@ -220,24 +212,25 @@ impl Function for Fcoin {
         Ok(result)
     }
 
-    fn get_match_result(&self, id: String) -> Result<ApiResponse<MatchResult>> {
+    fn get_match_result(&self, id: &str) -> Result<ApiResponse<Vec<MatchResult>>> {
         let mut url = self.uri.to_string();
         url += "/orders/";
-        url += &id;
+        url += id;
         url += "/match-results";
         let mut sig_prefix = "https://api.fcoin.com/v2/orders/".to_string();
-        sig_prefix += &id;
+        sig_prefix += id;
         sig_prefix += "/match-results";
         let mut keys = vec![];
         let mut values = vec![];
         let current_time = time::get_time();
         let timestamp: u64 = (current_time.sec as u64 * 1000) + (current_time.nsec as u64 / 1000 / 1000);
-        let sig = signature::sign("POST", &sig_prefix, timestamp, &mut keys, &mut values, &self.secret);
+        let sig = signature::sign("GET", &sig_prefix, timestamp, &mut keys, &mut values, &self.secret);
         let mut headers = Headers::new();
         headers.set(FcAccessKey(self.key.clone()));
         headers.set(FcAccessSignature(sig));
         headers.set(FcAccessTimestamp(timestamp.to_string()));
-        let result: ApiResponse<MatchResult> = self.http.get(&url).headers(headers).send()?.json()?;
+        let mut response = self.http.get(&url).headers(headers).send()?;
+        let result: ApiResponse<Vec<MatchResult>> = response.json()?;
         Ok(result)
     }
 }

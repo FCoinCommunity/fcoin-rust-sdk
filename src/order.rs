@@ -11,8 +11,8 @@ pub struct OrderRequest<'a> {
 }
 
 pub struct OrderQuery {
-    pub symbol: Option<String>,
-    pub states: Option<String>,
+    pub symbol: String,
+    pub states: String,
     pub before: Option<u16>,
     pub after: Option<u16>,
     pub limit: Option<u16>,
@@ -22,14 +22,15 @@ pub struct OrderQuery {
 pub struct OrderInfo {
     pub id: String,
     pub symbol: String,
+    #[serde(rename = "type")]
     pub instruction: String,
-    pub buy_or_sell: String,
+    pub side: String,
     pub price: String,
     pub amount: String,
     pub state: String,
     pub executed_value: String,
     pub fill_fees: String,
-    pub fill_amount: String,
+    pub filled_amount: String,
     pub created_at: u64,
     pub source: String,
 }
@@ -39,7 +40,8 @@ pub struct MatchResult {
     pub price: String,
     pub fill_fees: String,
     pub filled_amount: String,
-    pub side: String,
+    pub side: Option<String>,
+    #[serde(rename = "type")]
     pub instruction: String,
     pub created_at: u64,
 }
