@@ -1,5 +1,7 @@
-use base64;
-use hmacsha1;
+
+use super::base64;
+use hmac::{Hmac, Mac};
+use sha1::Sha1;
 
 pub fn sign(method: &'static str,
            url: &str,
@@ -11,30 +13,24 @@ pub fn sign(method: &'static str,
     sig += &url;
     let t = timestamp.to_string();
     sig += &t;
-    for x in 0..keys.len() - 1 {
-        let k = keys.remove(0);
-        let v = values.remove(0);
-        sig += &k;
+    for x in 0..keys.len() {
+        sig += &keys[x];
         sig += "=";
-        sig += &v;
+        sig += &values[x];
         sig += "&";
     }
-    let k = keys.remove(0);
-    let v = values.remove(0);
-    sig += &k;
-    sig += "=";
-    sig += &v;
+    if sig.ends_with("&") {
+        sig.pop();
+    }
     let pre_hmac = base64::encode(&sig);
     dg(pre_hmac.as_bytes(), sk)
 }
 
 fn dg(bytes: &[u8], sk: &str) -> String {
-    let hmac_bytes = hmacsha1::hmac_sha1(sk.as_bytes(), bytes);
-    let mut buffer = "".to_string();
-    for b in &hmac_bytes {
-        buffer += &format!("{:02x}", b);
-    }
-    base64::encode(&buffer)
+    let mut mac = Hmac::<Sha1>::new(sk.as_bytes()).unwrap();
+    mac.input(bytes);
+    let hmac_bytes = mac.result().code();
+    base64::encode(&hmac_bytes)
 }
 
 #[cfg(test)]
@@ -48,6 +44,6 @@ mod tests {
         let mut keys: Vec<String> = vec!["amount".to_string(), "price".to_string(), "side".to_string(), "symbol".to_string(), "type".to_string()];
         let mut values: Vec<String> = vec!["100.0".to_string(), "100.0".to_string(), "buy".to_string(), "btcusdt".to_string(), "limit".to_string()];
         let r = sign("POST", "https://api.fcoin.com/v2/orders", t, &mut keys, &mut values, "3600d0a74aa3410fb3b1996cca2419c8");
-        assert_eq!("MGRlM2ZhYTFmYjY1NzQ4YWYyYjM0ZWFlYWI3MDdiMmU0ODc3NmI0NQ==", &r);
+        assert_eq!("DeP6oftldIrys06uq3B7Lkh3a0U=", r);
     }
 }
