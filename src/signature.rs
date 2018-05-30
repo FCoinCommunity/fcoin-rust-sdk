@@ -1,4 +1,4 @@
-use base64;
+use super::base64;
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
 
@@ -12,19 +12,15 @@ pub fn sign(method: &'static str,
     sig += &url;
     let t = timestamp.to_string();
     sig += &t;
-    for _x in 0..keys.len() - 1 {
-        let k = keys.remove(0);
-        let v = values.remove(0);
-        sig += &k;
+    for x in 0..keys.len() {
+        sig += &keys[x];
         sig += "=";
-        sig += &v;
+        sig += &values[x];
         sig += "&";
     }
-    let k = keys.remove(0);
-    let v = values.remove(0);
-    sig += &k;
-    sig += "=";
-    sig += &v;
+    if sig.ends_with("&") {
+        sig.pop();
+    }
     let pre_hmac = base64::encode(&sig);
     dg(pre_hmac.as_bytes(), sk)
 }
@@ -47,5 +43,6 @@ mod tests {
         let mut keys: Vec<String> = vec!["amount".to_string(), "price".to_string(), "side".to_string(), "symbol".to_string(), "type".to_string()];
         let mut values: Vec<String> = vec!["100.0".to_string(), "100.0".to_string(), "buy".to_string(), "btcusdt".to_string(), "limit".to_string()];
         let r = sign("POST", "https://api.fcoin.com/v2/orders", t, &mut keys, &mut values, "3600d0a74aa3410fb3b1996cca2419c8");
+        assert_eq!("DeP6oftldIrys06uq3B7Lkh3a0U=", r);
     }
 }

@@ -1,5 +1,6 @@
-use bigdecimal::BigDecimal;
+
 use std::str::FromStr;
+use bigdecimal::BigDecimal;
 
 pub struct OrderRequest<'a> {
     pub symbol: &'a str,
@@ -8,6 +9,41 @@ pub struct OrderRequest<'a> {
     pub price: BigDecimal,
     pub amount: BigDecimal,
 }
+
+pub struct OrderQuery {
+    pub symbol: Option<String>,
+    pub states: Option<String>,
+    pub before: Option<u16>,
+    pub after: Option<u16>,
+    pub limit: Option<u16>,
+}
+
+#[derive(Deserialize, Debug, Eq, PartialEq)]
+pub struct OrderInfo {
+    pub id: String,
+    pub symbol: String,
+    pub instruction: String,
+    pub buy_or_sell: String,
+    pub price: String,
+    pub amount: String,
+    pub state: String,
+    pub executed_value: String,
+    pub fill_fees: String,
+    pub fill_amount: String,
+    pub created_at: u64,
+    pub source: String,
+}
+
+#[derive(Deserialize, Debug, Eq, PartialEq)]
+pub struct MatchResult {
+    pub price: String,
+    pub fill_fees: String,
+    pub filled_amount: String,
+    pub side: String,
+    pub instruction: String,
+    pub created_at: u64,
+}
+
 
 impl<'a> OrderRequest<'a> {
     pub fn sell_limit(symbol: &'a str, amount: BigDecimal, price: BigDecimal) -> OrderRequest<'a> {
@@ -53,9 +89,6 @@ impl<'a> OrderRequest<'a> {
 
 #[cfg(test)]
 mod tests {
-
-    use bigdecimal::BigDecimal;
-    use std::str::FromStr;
 
     #[test]
     fn test_order() {
