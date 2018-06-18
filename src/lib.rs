@@ -39,6 +39,8 @@ pub trait Function {
     fn get(&self, id: &str) -> Result<ApiResponse<OrderInfo>>;
 
     fn get_match_result(&self, id: &str) -> Result<ApiResponse<Vec<MatchResult>>>;
+
+    fn get_orderbook(&self, level: &str, coin: &str, currency: &str) -> Result<ApiResponse<Orderbook>>;
 }
 
 pub struct Fcoin {
@@ -233,6 +235,17 @@ impl Function for Fcoin {
         let result: ApiResponse<Vec<MatchResult>> = response.json()?;
         Ok(result)
     }
+
+    fn get_orderbook(&self, level: &str, coin: &str, currency: &str) -> Result<ApiResponse<Orderbook>> {
+        let mut url = self.uri.to_string();
+        url +=  "/market/depth/";
+        url += level;
+        url = url + "/" + coin + currency;
+        let mut response = self.http.get(&url).send()?;
+        let result: ApiResponse<Orderbook> = response.json()?;
+        Ok(result)
+    }
+
 }
 
 #[cfg(test)]
@@ -252,6 +265,14 @@ mod tests {
     fn test_symbols() {
         let fcoin = Fcoin::real("sk", "sd");
         let v = fcoin.symbols().unwrap();
+        assert_eq!(v.status, 0);
+        assert_ne!(v.data, None);
+    }
+
+    #[test]
+    fn test_orderbook() {
+        let fcoin = Fcoin::real("sk", "sd");
+        let v = fcoin.get_orderbook("L20", "btc", "usdt").unwrap();
         assert_eq!(v.status, 0);
         assert_ne!(v.data, None);
     }

@@ -46,6 +46,16 @@ pub struct MatchResult {
     pub created_at: u64,
 }
 
+#[derive(Deserialize, Debug, PartialEq)]
+pub struct Orderbook {
+    pub bids: Vec<f64>,
+    pub asks: Vec<f64>,
+    pub ts: i64,
+    pub seq: i64,
+    #[serde(rename = "type")]
+    pub order_type: String,
+}
+
 impl<'a> OrderRequest<'a> {
     pub fn sell_limit(symbol: &'a str, amount: BigDecimal, price: BigDecimal) -> OrderRequest<'a> {
         OrderRequest {
