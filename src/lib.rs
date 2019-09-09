@@ -16,7 +16,7 @@ extern crate hyper;
 extern crate serde_derive;
 extern crate serde;
 
-use order::*;
+use crate::order::*;
 use hyper::header::Headers;
 
 header! { (FcAccessKey, "FC-ACCESS-KEY") => [String] }
